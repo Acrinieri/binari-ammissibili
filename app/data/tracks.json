@@ -1,0 +1,190 @@
+{
+  "binari": {
+    "I NORD": {
+      "capacita_funzionale_m": 206,
+      "marciapiede_complessivo_m": 206,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 206
+    },
+    "I": {
+      "capacita_funzionale_m": 396,
+      "marciapiede_complessivo_m": 396,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 396
+    },
+    "II": {
+      "capacita_funzionale_m": 449,
+      "marciapiede_complessivo_m": 449,
+      "marciapiede_alto_m": 449,
+      "marciapiede_basso_m": 0
+    },
+    "III": {
+      "capacita_funzionale_m": 449,
+      "marciapiede_complessivo_m": 449,
+      "marciapiede_alto_m": 449,
+      "marciapiede_basso_m": 0
+    },
+    "IV": {
+      "capacita_funzionale_m": 449,
+      "marciapiede_complessivo_m": 449,
+      "marciapiede_alto_m": 449,
+      "marciapiede_basso_m": 0
+    },
+    "V": {
+      "capacita_funzionale_m": 449,
+      "marciapiede_complessivo_m": 449,
+      "marciapiede_alto_m": 449,
+      "marciapiede_basso_m": 0
+    },
+    "V BIS": {
+      "capacita_funzionale_m": 406,
+      "marciapiede_complessivo_m": 406,
+      "marciapiede_alto_m": 406,
+      "marciapiede_basso_m": 0
+    },
+    "VI": {
+      "capacita_funzionale_m": 404,
+      "marciapiede_complessivo_m": 404,
+      "marciapiede_alto_m": 404,
+      "marciapiede_basso_m": 0
+    },
+    "VII": {
+      "capacita_funzionale_m": 384,
+      "marciapiede_complessivo_m": 384,
+      "marciapiede_alto_m": 384,
+      "marciapiede_basso_m": 0
+    },
+    "VII BIS": {
+      "capacita_funzionale_m": 310,
+      "marciapiede_complessivo_m": 0,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 0
+    },
+    "VIII": {
+      "capacita_funzionale_m": 310,
+      "marciapiede_complessivo_m": 310,
+      "marciapiede_alto_m": 310,
+      "marciapiede_basso_m": 0
+    },
+    "IX": {
+      "capacita_funzionale_m": 310,
+      "marciapiede_complessivo_m": 310,
+      "marciapiede_alto_m": 310,
+      "marciapiede_basso_m": 0
+    },
+    "IX BIS": {
+      "capacita_funzionale_m": 193,
+      "marciapiede_complessivo_m": 0,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 0
+    },
+    "X": {
+      "capacita_funzionale_m": 311,
+      "marciapiede_complessivo_m": 311,
+      "marciapiede_alto_m": 311,
+      "marciapiede_basso_m": 0
+    },
+    "XI": {
+      "capacita_funzionale_m": 246,
+      "marciapiede_complessivo_m": 246,
+      "marciapiede_alto_m": 246,
+      "marciapiede_basso_m": 0
+    },
+    "XII": {
+      "capacita_funzionale_m": 246,
+      "marciapiede_complessivo_m": 246,
+      "marciapiede_alto_m": 246,
+      "marciapiede_basso_m": 0
+    },
+    "XIII": {
+      "capacita_funzionale_m": 246,
+      "marciapiede_complessivo_m": 246,
+      "marciapiede_alto_m": 246,
+      "marciapiede_basso_m": 0
+    },
+    "XIV": {
+      "capacita_funzionale_m": 246,
+      "marciapiede_complessivo_m": 246,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 246
+    },
+    "XV": {
+      "capacita_funzionale_m": 205,
+      "marciapiede_complessivo_m": 205,
+      "marciapiede_alto_m": 118,
+      "marciapiede_basso_m": 87
+    },
+    "XVI": {
+      "capacita_funzionale_m": 168,
+      "marciapiede_complessivo_m": 168,
+      "marciapiede_alto_m": 120,
+      "marciapiede_basso_m": 48
+    },
+    "XVII": {
+      "capacita_funzionale_m": 168,
+      "marciapiede_complessivo_m": 168,
+      "marciapiede_alto_m": 120,
+      "marciapiede_basso_m": 48
+    },
+    "XVIII": {
+      "capacita_funzionale_m": 180,
+      "marciapiede_complessivo_m": 180,
+      "marciapiede_alto_m": 119,
+      "marciapiede_basso_m": 61
+    },
+    "XIX": {
+      "capacita_funzionale_m": 179,
+      "marciapiede_complessivo_m": 145,
+      "marciapiede_alto_m": 119,
+      "marciapiede_basso_m": 26
+    },
+    "XX": {
+      "capacita_funzionale_m": 143,
+      "marciapiede_complessivo_m": 139,
+      "marciapiede_alto_m": 73,
+      "marciapiede_basso_m": 66
+    },
+    "XXI": {
+      "capacita_funzionale_m": 143,
+      "marciapiede_complessivo_m": 139,
+      "marciapiede_alto_m": 73,
+      "marciapiede_basso_m": 66
+    },
+    "XXII": {
+      "capacita_funzionale_m": 163,
+      "marciapiede_complessivo_m": 155,
+      "marciapiede_alto_m": 155,
+      "marciapiede_basso_m": 0
+    },
+    "1ª ASTA": {
+      "capacita_funzionale_m": 190,
+      "marciapiede_complessivo_m": 0,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 0
+    },
+    "2ª ASTA": {
+      "capacita_funzionale_m": 186,
+      "marciapiede_complessivo_m": 0,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 0
+    },
+    "TERMICA": {
+      "capacita_funzionale_m": 126,
+      "marciapiede_complessivo_m": 0,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 0
+    },
+    "3ª ASTA": {
+      "capacita_funzionale_m": 370,
+      "marciapiede_complessivo_m": 0,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 0
+    },
+    "SSE AMB.": {
+      "capacita_funzionale_m": 0,
+      "marciapiede_complessivo_m": 0,
+      "marciapiede_alto_m": 0,
+      "marciapiede_basso_m": 0
+    }
+  }
+}
