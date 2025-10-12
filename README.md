@@ -103,6 +103,7 @@ Sample response:
 - Proteggere gli endpoint di amministrazione con autenticazione/autorizzazione prima di esporre il servizio.
 - Valutare una migrazione a Postgres o altra base dati condivisa se servono ambienti multi‑utente o alta concorrenza.
 - Automatizzare verifiche (lint, type checking, test end-to-end) con GitHub Actions prima di distribuire il servizio.
+- Integrare pipeline automatiche usando lo script `python -m scripts.json_pipeline` descritto in [`docs/automation.md`](docs/automation.md).
 
 
 
