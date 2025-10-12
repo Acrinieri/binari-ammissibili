@@ -34,7 +34,13 @@ FastAPI + React application that suggests admissible railway tracks for a train 
    npm install
    npm start
    ```
-   The UI runs on `http://localhost:3000` and calls the FastAPI server.
+The UI runs on `http://localhost:3000` and calls the FastAPI server.
+
+## Deployment
+
+- Production compose stack (backend + frontend) is configured for `https://rfi.b4service.it` with the API exposed under `/api`.
+- The stack plugs into the existing `service-tier` Docker network alongside `nginx-proxy`.
+- The full sysadmin run-book is available in [`docs/deploy.md`](docs/deploy.md).
 
 ## API Overview
 
