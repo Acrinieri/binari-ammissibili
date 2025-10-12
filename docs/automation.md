@@ -73,6 +73,26 @@ bash scripts/pipeline_job.sh
 
 In alternativa è possibile usare un servizio `systemd` o un orchestratore (Airflow, Prefect) seguendo gli stessi comandi di base.
 
+### Ambienti Docker
+
+Se l'app gira in container, esegui gli script tramite `docker compose exec backend ...`, ad esempio:
+
+```bash
+docker compose exec backend bash -lc \
+  'cd /app && bash scripts/pipeline_job.sh'
+```
+
+Per il cron sull'host:
+
+```
+*/15 * * * * cd /srv/binari && \
+  docker compose exec -T backend bash -lc \
+    "cd /app && TRAIN_CODE=98765 TRAIN_LENGTH=320 TRAIN_CATEGORY=IC \
+     FORWARD_URL=https://downstream.example.com/ingest \
+     bash scripts/pipeline_job.sh" \
+  >> /var/log/binari_pipeline.log 2>&1
+```
+
 ## Possibili integrazioni
 
 - **Cron/Batch**: crea un job che aggiorna periodicamente `input.json` e invoca lo script.
