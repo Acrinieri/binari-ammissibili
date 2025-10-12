@@ -38,7 +38,7 @@ The UI runs on `http://localhost:3000` and calls the FastAPI server.
 
 ## Deployment
 
-- Production compose stack (backend + frontend) is configured for `https://rfi.b4service.it` with the API exposed under `/api`.
+- Production compose stack (backend + frontend) is configured for `https://rfi.b4service.it` (UI) and `https://api.rfi.b4service.it` (API).
 - The stack plugs into the existing `service-tier` Docker network alongside `nginx-proxy`.
 - The full sysadmin run-book is available in [`docs/deploy.md`](docs/deploy.md).
 
