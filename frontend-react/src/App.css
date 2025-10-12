@@ -122,6 +122,20 @@
   gap: 8px;
 }
 
+.rule-help {
+  font-size: 0.9rem;
+  color: #4b5563;
+  background-color: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+
+.rule-help ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
 .criteria-row {
   display: flex;
   flex-wrap: wrap;

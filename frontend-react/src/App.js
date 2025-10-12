@@ -915,6 +915,36 @@ function App() {
             className="section-card section-card--compact stack-sm form-wide"
           >
             <h3>Modifica regola per {editingRule.category}</h3>
+            <div className="rule-help">
+              <strong>Come funzionano i campi:</strong>
+              <ul>
+                <li>
+                  <strong>Consenti binari con suffisso BIS</strong>: include i
+                  binari con suffisso &ldquo;BIS&rdquo; tra i candidati; se
+                  disattivato vengono scartati.
+                </li>
+                <li>
+                  <strong>Consenti binari senza marciapiede</strong>: permette
+                  l&rsquo;uso di binari privi di marciapiede per questa
+                  categoria.
+                </li>
+                <li>
+                  <strong>Numero minimo / massimo</strong>: limite rigido sul
+                  numero di binario ammesso (prima del suffisso). Fuori da questo
+                  range i binari sono esclusi.
+                </li>
+                <li>
+                  <strong>Range preferito</strong>: fascia &ldquo;soft&rdquo; da
+                  privilegiare. I binari dentro l&rsquo;intervallo vengono
+                  ordinati più in alto rispetto agli altri pur sempre ammessi.
+                </li>
+                <li>
+                  <strong>Escludi...</strong>: forza la rimozione di binari
+                  specifici (per nome, per sottostringa o per numero), separando
+                  i valori con la virgola.
+                </li>
+              </ul>
+            </div>
             <label className="inline-checkbox">
               <input
                 type="checkbox"
