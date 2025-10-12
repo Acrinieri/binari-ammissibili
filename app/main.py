@@ -19,7 +19,12 @@ def startup() -> None:
 # Allow the React dev server to talk to the API during local development.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://rfi.b4service.it",
+        "https://api.rfi.b4service.it",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

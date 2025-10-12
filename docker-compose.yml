@@ -21,11 +21,12 @@ services:
     build:
       context: ./frontend-react
       dockerfile: ../Dockerfile.frontend
+      args:
+        REACT_APP_API_BASE: https://api.rfi.b4service.it
     environment:
       - VIRTUAL_HOST=rfi.b4service.it
       - LETSENCRYPT_HOST=rfi.b4service.it
       - VIRTUAL_PORT=80
-      - REACT_APP_API_BASE=https://api.rfi.b4service.it
     networks:
       - service-tier
     restart: unless-stopped
