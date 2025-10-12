@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -81,7 +81,12 @@ def update_track(
     return _track_to_detail(track)
 
 
-@router.delete("/{track_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{track_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
 def delete_track(track_id: int, db: Session = Depends(get_db)) -> None:
     track = _get_track_or_404(db, track_id)
     db.delete(track)

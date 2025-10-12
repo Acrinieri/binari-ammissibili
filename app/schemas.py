@@ -120,3 +120,36 @@ class SuggestedTrack(BaseModel):
 
 class SuggestionResponse(BaseModel):
     alternatives: list[SuggestedTrack]
+
+
+class CategoryRulePayload(BaseModel):
+    allow_bis: bool = False
+    allow_no_platform: bool = False
+    min_track_number: Optional[int] = None
+    max_track_number: Optional[int] = None
+    preferred_min_track_number: Optional[int] = None
+    preferred_max_track_number: Optional[int] = None
+    deny_track_names: list[str] = Field(default_factory=list)
+    deny_track_patterns: list[str] = Field(default_factory=list)
+    deny_track_numbers: list[int] = Field(default_factory=list)
+
+
+class CategoryRuleResponse(CategoryRulePayload):
+    category: str
+    is_custom: bool = False
+
+
+class PriorityCriterionPayload(BaseModel):
+    key: str
+    weight: float = 1.0
+    direction: float = 1.0
+
+
+class PriorityConfigPayload(BaseModel):
+    criteria: list[PriorityCriterionPayload] = Field(default_factory=list)
+    same_number_bonus: float = -1.0
+
+
+class PriorityConfigResponse(PriorityConfigPayload):
+    category: str
+    is_custom: bool = False

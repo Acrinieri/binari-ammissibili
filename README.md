@@ -1,13 +1,14 @@
 # Binari Ammissibili
 
-FastAPI + React application that suggests admissible railway tracks for a train based on a configurable dataset.
+FastAPI + React application that suggests admissible railway tracks for a train based on configurable rules and a persistent dataset.
 
 ## Features
 
 - Encapsulates the selection rules from the original CLI script into a REST API.
 - Stores tracks inside a SQLite database (`tracks.db`), seeded from `app/data/tracks.json` on first launch.
 - Provides `POST /tracks/suggestions` to calculate up to seven alternative tracks, returning a reason for each choice.
-- React interface to input train details, review the dataset, and administer the track catalogue (create/update/delete).
+- Stores category-specific rules and priority criteria in the database, editable from the admin UI (with one-click fallback to defaults).
+- React interface to input train details, review the dataset, and administer both tracks and matching rules (create/update/delete/reset).
 
 ## Getting Started
 
@@ -46,6 +47,12 @@ FastAPI + React application that suggests admissible railway tracks for a train 
 | `/admin/tracks` | `POST` | Creates a new track. |
 | `/admin/tracks/{id}` | `PUT` | Updates an existing track. |
 | `/admin/tracks/{id}` | `DELETE` | Removes a track. |
+| `/admin/config/category-rules` | `GET` | Lists effective rules per train category (custom + defaults). |
+| `/admin/config/category-rules/{category}` | `PUT` | Creates or updates the rule for a specific category. |
+| `/admin/config/category-rules/{category}` | `DELETE` | Removes the custom rule so defaults apply again. |
+| `/admin/config/priority-configs` | `GET` | Lists ordering/weights applied during sorting per category. |
+| `/admin/config/priority-configs/{category}` | `PUT` | Saves a custom set of criteria/weights for a category. |
+| `/admin/config/priority-configs/{category}` | `DELETE` | Removes the custom profile and reverts to defaults. |
 
 Sample payload:
 
@@ -90,3 +97,8 @@ Sample response:
 - Proteggere gli endpoint di amministrazione con autenticazione/autorizzazione prima di esporre il servizio.
 - Valutare una migrazione a Postgres o altra base dati condivisa se servono ambienti multi‑utente o alta concorrenza.
 - Automatizzare verifiche (lint, type checking, test end-to-end) con GitHub Actions prima di distribuire il servizio.
+
+
+
+
+

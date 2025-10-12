@@ -7,6 +7,8 @@ import math
 from dataclasses import dataclass
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
+from ..config_service import CategoryRuleConfig, PriorityConfig
+
 logger = logging.getLogger(__name__)
 
 TrackDataset = Dict[str, Dict[str, Any]]
@@ -39,21 +41,6 @@ ROMAN = {
     "XXV": 25,
 }
 
-LH_CATEGORIES = {
-    "LH",
-    "EC",
-    "EN",
-    "IC",
-    "ICN",
-    "EXP",
-    "NCL",
-    "ES*",
-    "FR",
-    "FA",
-    "FB",
-    "NTV",
-}
-
 
 class TrackMetadata(NamedTuple):
     num: Optional[int]
@@ -67,29 +54,18 @@ class CandidateRecord:
     name: str
     priority_class: int
     proximity: float
-    neg_similarity: int
-    same_number_bonus: int
+    similarity_score: int
+    same_number_bonus: float
     len_delta: int
     sort_num: float
     suffix_flag: int
-    similarity: int
     len_compl: int
     cap_fun: int
     num: Optional[int]
     suffix: str
 
 
-def _is_lh(train_type: Optional[str]) -> bool:
-    """Return True when the train type belongs to long-distance classes."""
-    return (train_type or "").upper().strip() in LH_CATEGORIES
-
-
 def _parse_track_name(name: str) -> Tuple[Optional[int], str, str]:
-    """
-    Normalise and split a track name.
-
-    Returns a tuple (number, suffix, normalised_name).
-    """
     if not isinstance(name, str):
         return None, "", ""
     normalised = " ".join(name.strip().upper().split())
@@ -102,14 +78,7 @@ def _parse_track_name(name: str) -> Tuple[Optional[int], str, str]:
     return number, suffix, normalised
 
 
-def _class_matches_es_star(train_type: str) -> bool:
-    """True when the class is ES or ES*."""
-    tt = (train_type or "").upper().strip()
-    return tt in {"ES", "ES*"}
-
-
 def _profile_tuple(info: Dict[str, Any]) -> Tuple[int, int]:
-    """Return (high_platform_flag, low_platform_flag) for the track."""
     high = 1 if (info.get("marciapiede_alto_m") or 0) > 0 else 0
     low = 1 if (info.get("marciapiede_basso_m") or 0) > 0 else 0
     return high, low
@@ -119,7 +88,6 @@ def _track_similarity_score(
     candidate_info: Dict[str, Any],
     planned_info: Optional[Dict[str, Any]],
 ) -> int:
-    """Score similarity with the planned track."""
     if not planned_info:
         return 0
     score = 0
@@ -132,23 +100,12 @@ def _track_similarity_score(
     return score
 
 
-def _priority_class(train_type: str, num: Optional[int]) -> int:
-    """
-    Long distance trains prefer tracks 2-13.
-    Tracks 1 and 14 are second choice. Others are excluded earlier.
-    """
-    if _is_lh(train_type) and isinstance(num, int):
-        return 0 if 2 <= num <= 13 else 1
-    return 0
-
-
 def _proximity_rank(
     candidate_num: Optional[int],
     candidate_suffix: str,
     planned_num: Optional[int],
     planned_suffix: str,
 ) -> float:
-    """Distance metric between track numbers."""
     if candidate_num is None or planned_num is None:
         return math.inf
     if candidate_num == planned_num and candidate_suffix != planned_suffix:
@@ -157,7 +114,6 @@ def _proximity_rank(
 
 
 def _normalise_capacity(info: Dict[str, Any]) -> int:
-    """Return the functional capacity length handling common typos."""
     value = (
         info.get("capacita_funzionale_m")
         or info.get("capacita_funzionle_m")
@@ -170,7 +126,6 @@ def _normalise_capacity(info: Dict[str, Any]) -> int:
 
 
 def _validate_track_data(track_name: str, info: Dict[str, Any]) -> bool:
-    """Ensure required fields are present and numeric."""
     value = info.get("marciapiede_complessivo_m")
     if value is None:
         logger.warning(
@@ -191,7 +146,6 @@ def _validate_track_data(track_name: str, info: Dict[str, Any]) -> bool:
 
 
 def _build_track_metadata(tracks: TrackDataset) -> Dict[str, TrackMetadata]:
-    """Construct cached metadata per track."""
     track_meta: Dict[str, TrackMetadata] = {}
     for name, info in tracks.items():
         if not _validate_track_data(name, info):
@@ -208,7 +162,6 @@ def _resolve_planned_track(
     track_meta: Dict[str, TrackMetadata],
     tracks: TrackDataset,
 ) -> Tuple[Optional[int], str, Optional[Dict[str, Any]]]:
-    """Find the planned track and its info."""
     if not planned_track:
         return None, "", None
 
@@ -218,44 +171,61 @@ def _resolve_planned_track(
     }
     resolved_norm = lookup.get((planned_num, planned_suffix), planned_norm)
     planned_info = tracks.get(resolved_norm)
-    if not planned_info:
+    if not planned_info and planned_track:
         logger.warning(
-            "Planned track '%s' not found in dataset. Proximity scoring disabled.",
+            "Planned track '%s' not found nei dati. Prossimita disabilitata.",
             planned_track,
         )
     return planned_num, planned_suffix or "", planned_info
+
+
+def _priority_class(num: Optional[int], rule: CategoryRuleConfig) -> int:
+    if not isinstance(num, int):
+        return 0
+
+    if rule.min_track_number is not None and num < rule.min_track_number:
+        return 1
+    if rule.max_track_number is not None and num > rule.max_track_number:
+        return 1
+
+    preferred_min = rule.preferred_min_track_number
+    preferred_max = rule.preferred_max_track_number
+    if preferred_min is not None and preferred_max is not None:
+        return 0 if preferred_min <= num <= preferred_max else 1
+
+    return 0
 
 
 def _is_track_excluded(
     norm_name: str,
     num: Optional[int],
     suffix: str,
-    train_type: str,
-    is_inv: bool,
+    rule: CategoryRuleConfig,
     planned_num: Optional[int],
     planned_suffix: str,
 ) -> bool:
-    """Check exclusion rules before ranking."""
     if norm_name == "SSE AMB.":
         return True
 
     if planned_num is not None and num == planned_num and suffix == planned_suffix:
         return True
 
-    if suffix == "BIS" and not is_inv:
+    if suffix == "BIS" and not rule.allow_bis:
         return True
 
-    if train_type == "PRM" and (
-        norm_name == "I NORD" or (num == 1 and " NORD" in norm_name)
-    ):
-        return True
-
-    if _class_matches_es_star(train_type) and num == 15:
-        return True
-
-    if _is_lh(train_type):
-        if not (isinstance(num, int) and 1 <= num <= 14):
+    if isinstance(num, int):
+        if rule.min_track_number is not None and num < rule.min_track_number:
             return True
+        if rule.max_track_number is not None and num > rule.max_track_number:
+            return True
+        if num in rule.deny_track_numbers:
+            return True
+
+    if norm_name in rule.deny_track_names:
+        return True
+
+    if any(pattern and pattern in norm_name for pattern in rule.deny_track_patterns):
+        return True
 
     return False
 
@@ -264,16 +234,17 @@ def _meets_length_requirements(
     len_compl: int,
     cap_fun: int,
     train_length: int,
-    is_inv: bool,
+    rule: CategoryRuleConfig,
 ) -> bool:
-    """Check length and capacity requirements."""
-    if not is_inv and len_compl <= 0:
+    if not rule.allow_no_platform and len_compl <= 0:
         return False
 
-    if is_inv:
+    if rule.allow_no_platform:
         if cap_fun > 0:
             return cap_fun >= train_length
-        return len_compl == 0 or len_compl >= train_length
+        if len_compl > 0:
+            return len_compl >= train_length
+        return True
 
     return len_compl >= train_length
 
@@ -281,45 +252,69 @@ def _meets_length_requirements(
 def _build_candidate_record(
     norm_name: str,
     meta: TrackMetadata,
-    train_type: str,
     planned_num: Optional[int],
     planned_suffix: str,
     planned_info: Optional[Dict[str, Any]],
     tracks: TrackDataset,
+    rule: CategoryRuleConfig,
+    priority: PriorityConfig,
 ) -> CandidateRecord:
-    """Produce the sorting tuple and metadata for a candidate track."""
-    prox = _proximity_rank(meta.num, meta.suffix, planned_num, planned_suffix)
+    proximity = _proximity_rank(meta.num, meta.suffix, planned_num, planned_suffix)
     cand_info = tracks.get(norm_name, {})
-    sim = _track_similarity_score(cand_info, planned_info)
+    similarity = _track_similarity_score(cand_info, planned_info)
     planned_len = (
         int(planned_info.get("marciapiede_complessivo_m") or 0)
         if planned_info
         else 0
     )
     len_delta = abs((planned_len or meta.len_compl) - meta.len_compl)
-    pclass = _priority_class(train_type, meta.num)
+    priority_class = _priority_class(meta.num, rule)
     sort_num = float(meta.num) if isinstance(meta.num, int) else math.inf
     suffix_flag = 1 if meta.suffix else 0
-    same_number_bonus = (
-        -1
-        if (planned_num is not None and meta.num == planned_num and meta.suffix != planned_suffix)
-        else 0
-    )
+    same_number_bonus = 0.0
+    if planned_num is not None and meta.num == planned_num and meta.suffix != planned_suffix:
+        same_number_bonus = priority.same_number_bonus
+
     return CandidateRecord(
         name=norm_name,
-        priority_class=pclass,
-        proximity=prox,
-        neg_similarity=-sim,
+        priority_class=priority_class,
+        proximity=proximity,
+        similarity_score=similarity,
         same_number_bonus=same_number_bonus,
         len_delta=len_delta,
         sort_num=sort_num,
         suffix_flag=suffix_flag,
-        similarity=sim,
         len_compl=meta.len_compl,
         cap_fun=meta.cap_fun,
         num=meta.num,
         suffix=meta.suffix,
     )
+
+
+def _criterion_value(
+    key: str,
+    record: CandidateRecord,
+    priority: PriorityConfig,
+) -> float:
+    if key == "priority_class":
+        return record.priority_class
+    if key == "proximity":
+        return record.proximity
+    if key == "similarity":
+        return -record.similarity_score
+    if key == "same_number":
+        return record.same_number_bonus
+    if key == "length_delta":
+        return record.len_delta
+    if key == "track_number":
+        return record.sort_num
+    if key == "suffix_flag":
+        return record.suffix_flag
+    if key == "no_platform_first":
+        return 0.0 if record.len_compl == 0 else 1.0
+    if key == "bis_preference":
+        return 0.0 if record.suffix == "BIS" else 1.0
+    return 0.0
 
 
 def _build_reason(
@@ -330,36 +325,35 @@ def _build_reason(
     planned_suffix: str,
     planned_info: Optional[Dict[str, Any]],
     tracks: TrackDataset,
+    rule: CategoryRuleConfig,
 ) -> str:
-    """Produce a human-readable explanation for the suggested track."""
     parts: List[str] = []
     info = tracks.get(record.name, {})
 
-    if train_type == "INV":
-        if record.len_compl == 0:
-            parts.append("Nessun marciapiede disponibile: priorita per treni INV.")
-        else:
-            parts.append(
-                f"Marciapiede da {record.len_compl} m compatibile con la categoria INV."
-            )
-        if record.cap_fun > 0:
-            parts.append(
-                f"Capacita funzionale {record.cap_fun} m sufficiente per il treno da {train_length_m} m."
-            )
-        if record.suffix == "BIS":
-            parts.append(
-                "Binario BIS privilegiato rispetto ai binari con marciapiede per categoria INV."
-            )
+    if rule.allow_no_platform and record.len_compl == 0:
+        parts.append("Nessun marciapiede disponibile: consentito per questa categoria.")
     else:
         parts.append(
             f"Marciapiede da {record.len_compl} m >= lunghezza treno {train_length_m} m."
         )
 
-    if _is_lh(train_type):
+    if record.cap_fun > 0:
+        parts.append(
+            f"Capacita funzionale {record.cap_fun} m sufficiente per il treno da {train_length_m} m."
+        )
+
+    if rule.allow_bis and record.suffix == "BIS":
+        parts.append("Binario BIS ammesso dalle regole della categoria.")
+
+    if rule.preferred_min_track_number is not None and rule.preferred_max_track_number is not None:
         if record.priority_class == 0:
-            parts.append("Binario nella fascia prioritaria per lunga percorrenza (2-13).")
+            parts.append(
+                f"Binario nella fascia prioritaria ({rule.preferred_min_track_number}-{rule.preferred_max_track_number})."
+            )
         else:
-            parts.append("Binario di supporto per lunga percorrenza (1 o 14).")
+            parts.append(
+                f"Binario di supporto rispetto alla fascia preferita ({rule.preferred_min_track_number}-{rule.preferred_max_track_number})."
+            )
 
     if planned_num is not None:
         if record.num == planned_num and record.suffix != planned_suffix:
@@ -375,9 +369,9 @@ def _build_reason(
         elif not math.isfinite(record.proximity):
             parts.append("Numero non confrontabile con il binario previsto.")
 
-    if record.similarity >= 2:
+    if record.similarity_score >= 2:
         parts.append("Marciapiede identico al previsto.")
-    elif record.similarity == 1:
+    elif record.similarity_score == 1:
         parts.append("Profilo marciapiede coerente con il previsto.")
 
     high, low = _profile_tuple(info)
@@ -400,13 +394,16 @@ def select_tracks(
     train_category: str,
     tracks: TrackDataset,
     planned_track: Optional[str] = None,
+    category_rule: Optional[CategoryRuleConfig] = None,
+    priority_config: Optional[PriorityConfig] = None,
 ) -> List[Dict[str, str]]:
-    """Return up to seven admissible tracks with explanatory notes."""
     if train_length_m <= 0:
         raise ValueError("Train length must be greater than zero.")
 
+    if category_rule is None or priority_config is None:
+        raise ValueError("Configuration objects are required.")
+
     train_type = (train_category or "").upper().strip()
-    is_inv = train_type == "INV"
 
     metadata = _build_track_metadata(tracks)
     if not metadata:
@@ -422,8 +419,7 @@ def select_tracks(
             norm_name,
             meta.num,
             meta.suffix,
-            train_type,
-            is_inv,
+            category_rule,
             planned_num,
             planned_suffix,
         ):
@@ -433,40 +429,38 @@ def select_tracks(
             meta.len_compl,
             meta.cap_fun,
             train_length_m,
-            is_inv,
+            category_rule,
         ):
             continue
 
-        candidates.append(
-            _build_candidate_record(
-                norm_name,
-                meta,
-                train_type,
-                planned_num,
-                planned_suffix,
-                planned_info,
-                tracks,
-            )
+        record = _build_candidate_record(
+            norm_name,
+            meta,
+            planned_num,
+            planned_suffix,
+            planned_info,
+            tracks,
+            category_rule,
+            priority_config,
         )
+        candidates.append(record)
 
-    def _sort_key(record: CandidateRecord) -> Tuple:
-        base = (
-            record.priority_class,
-            record.proximity,
-            record.neg_similarity,
-            record.same_number_bonus,
-            record.len_delta,
-            record.sort_num,
-            record.suffix_flag,
-        )
-        if train_type == "INV":
-            has_platform = 0 if record.len_compl == 0 else 1
-            bis_rank = 0 if record.suffix == "BIS" else 1
-            return (has_platform, bis_rank) + base
-        return base
+    criteria = priority_config.criteria or [{"key": "track_number"}]
 
-    candidates.sort(key=_sort_key)
-    results: List[Dict[str, str]] = []
+    def sort_key(record: CandidateRecord) -> Tuple[float, ...]:
+        values: List[float] = []
+        for criterion in criteria:
+            key = criterion.get("key")
+            if not key:
+                continue
+            weight = float(criterion.get("weight", 1.0))
+            direction = float(criterion.get("direction", 1.0))
+            values.append(_criterion_value(key, record, priority_config) * weight * direction)
+        return tuple(values)
+
+    candidates.sort(key=sort_key)
+
+    suggestions: List[Dict[str, str]] = []
     for candidate in candidates[:7]:
         reason = _build_reason(
             candidate,
@@ -476,6 +470,8 @@ def select_tracks(
             planned_suffix,
             planned_info,
             tracks,
+            category_rule,
         )
-        results.append({"track": candidate.name, "reason": reason})
-    return results
+        suggestions.append({"track": candidate.name, "reason": reason})
+
+    return suggestions

@@ -5,6 +5,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from ..config_service import get_category_rule, get_priority_config
 from ..data_loader import DatasetError, load_tracks_dataset
 from ..database import get_db
 from ..schemas import (
@@ -58,12 +59,16 @@ def get_suggestions(
     train_category = "PRM" if payload.is_prm else payload.train_category
 
     try:
+        category_rule = get_category_rule(db, train_category)
+        priority_config = get_priority_config(db, train_category)
         alternatives = select_tracks(
             payload.train_code,
             payload.train_length_m,
             train_category,
             dataset,
             payload.planned_track,
+            category_rule=category_rule,
+            priority_config=priority_config,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
