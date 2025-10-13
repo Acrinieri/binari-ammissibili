@@ -120,6 +120,13 @@ class SuggestionRequest(BaseModel):
                             "is_prm": True,
                             "planned_track": None,
                         },
+                        {
+                            "train_code": "99887",
+                            "train_length_m": 280,
+                            "train_category": "INV",
+                            "is_prm": False,
+                            "planned_track": None,
+                        },
                     ]
                 },
                 {
