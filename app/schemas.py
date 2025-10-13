@@ -116,7 +116,7 @@ class SuggestionRequest(BaseModel):
                         {
                             "train_code": "98765",
                             "train_length_m": 320,
-                            "train_category": "INV",
+                            "train_category": "REG",
                             "is_prm": True,
                             "planned_track": None,
                         },
