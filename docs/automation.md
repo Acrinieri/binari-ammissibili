@@ -24,6 +24,29 @@ python -m scripts.json_pipeline \
 - `--output-path` (opzionale): se specificato, salva la risposta anche su file (utile per logging o audit).
 - `--timeout` (opzionale): timeout in secondi per le chiamate HTTP (default `10`).
 
+Il servizio accetta sia il formato singolo (campi `train_code`, `train_length_m`, ecc.) sia un array `trains` di oggetti con le stesse proprietà. Lo script `generate_input` continua a produrre il payload singolo, ma puoi creare input batch scrivendo manualmente un file come:
+
+```json
+{
+  "trains": [
+    {
+      "train_code": "61234",
+      "train_length_m": 250,
+      "train_category": "IC",
+      "planned_track": "IV",
+      "is_prm": false
+    },
+    {
+      "train_code": "98765",
+      "train_length_m": 320,
+      "train_category": "INV",
+      "planned_track": null,
+      "is_prm": false
+    }
+  ]
+}
+```
+
 ## Job automatico (cron/systemd)
 
 Per il deploy su Linux è disponibile lo script `scripts/pipeline_job.sh`, che:

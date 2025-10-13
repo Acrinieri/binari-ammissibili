@@ -11,6 +11,7 @@ from ..database import get_db
 from ..schemas import (
     SuggestionRequest,
     SuggestionResponse,
+    SuggestionResult,
     TrackData,
     TrackDataset,
 )
@@ -46,7 +47,7 @@ def get_tracks(db: Session = Depends(get_db)) -> TrackDataset:
 def get_suggestions(
     payload: SuggestionRequest, db: Session = Depends(get_db)
 ) -> SuggestionResponse:
-    """Compute admissible tracks for the requested train."""
+    """Compute admissible tracks for one or more requested trains."""
     try:
         dataset = (
             _to_plain_dataset(payload.tracks_override)
@@ -56,21 +57,32 @@ def get_suggestions(
     except (DatasetError, TypeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    train_category = "PRM" if payload.is_prm else payload.train_category
+    category_rule_cache: Dict[str, Any] = {}
+    priority_cache: Dict[str, Any] = {}
+    results: list[SuggestionResult] = []
 
-    try:
-        category_rule = get_category_rule(db, train_category)
-        priority_config = get_priority_config(db, train_category)
-        alternatives = select_tracks(
-            payload.train_code,
-            payload.train_length_m,
-            train_category,
-            dataset,
-            payload.planned_track,
-            category_rule=category_rule,
-            priority_config=priority_config,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    for train in payload.trains:
+        train_category = "PRM" if train.is_prm else train.train_category
 
-    return SuggestionResponse(alternatives=alternatives)
+        if train_category not in category_rule_cache:
+            category_rule_cache[train_category] = get_category_rule(db, train_category)
+            priority_cache[train_category] = get_priority_config(db, train_category)
+
+        try:
+            alternatives = select_tracks(
+                train.train_code,
+                train.train_length_m,
+                train_category,
+                dataset,
+                train.planned_track,
+                category_rule=category_rule_cache[train_category],
+                priority_config=priority_cache[train_category],
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        results.append(SuggestionResult(train=train, alternatives=alternatives))
+
+    top_level_alternatives = results[0].alternatives if len(results) == 1 else []
+
+    return SuggestionResponse(alternatives=top_level_alternatives, items=results)

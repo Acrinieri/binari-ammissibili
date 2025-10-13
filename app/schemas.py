@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, Field, PositiveInt, model_validator
 
 
 class TrackBase(BaseModel):
@@ -57,7 +57,7 @@ class TrackDetail(TrackBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SuggestionRequest(BaseModel):
+class TrainRequest(BaseModel):
     train_code: str = Field(..., description="Train number or code.")
     train_length_m: PositiveInt = Field(..., description="Train length in metres.")
     train_category: str = Field(
@@ -69,6 +69,12 @@ class SuggestionRequest(BaseModel):
     planned_track: Optional[str] = Field(
         None, description="Planned track name (optional)."
     )
+
+
+class SuggestionRequest(BaseModel):
+    trains: List[TrainRequest] = Field(
+        ..., min_length=1, description="List of trains to evaluate."
+    )
     tracks_override: Optional[Dict[str, TrackData]] = Field(
         None,
         description=(
@@ -76,17 +82,37 @@ class SuggestionRequest(BaseModel):
         ),
     )
 
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_legacy_payload(cls, value: Any) -> Any:
+        """Accept legacy single-train payloads or raw lists of trains."""
+        if isinstance(value, dict):
+            if "trains" in value:
+                return value
+            legacy_keys = {
+                "train_code",
+                "train_length_m",
+                "train_category",
+                "is_prm",
+                "planned_track",
+            }
+            if legacy_keys.intersection(value.keys()):
+                train_payload = {
+                    key: value.get(key)
+                    for key in legacy_keys
+                    if key in value
+                }
+                result: Dict[str, Any] = {"trains": [train_payload]}
+                if "tracks_override" in value:
+                    result["tracks_override"] = value["tracks_override"]
+                return result
+        elif isinstance(value, list):
+            return {"trains": value}
+        return value
+
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {
-                    "train_code": "61234",
-                    "train_length_m": 250,
-                    "train_category": "IC",
-                    "is_prm": False,
-                    "planned_track": "IV",
-                    "tracks_override": None,
-                },
                 {
                     "train_code": "98765",
                     "train_length_m": 320,
@@ -108,6 +134,23 @@ class SuggestionRequest(BaseModel):
                         },
                     },
                 },
+                {
+                    "trains": [
+                        {
+                            "train_code": "61234",
+                            "train_length_m": 250,
+                            "train_category": "IC",
+                            "is_prm": False,
+                            "planned_track": "IV",
+                        },
+                        {
+                            "train_code": "98765",
+                            "train_length_m": 320,
+                            "train_category": "INV",
+                            "is_prm": False,
+                        },
+                    ]
+                },
             ]
         }
     )
@@ -118,8 +161,23 @@ class SuggestedTrack(BaseModel):
     reason: str
 
 
+class SuggestionResult(BaseModel):
+    train: TrainRequest
+    alternatives: List[SuggestedTrack]
+
+
 class SuggestionResponse(BaseModel):
-    alternatives: list[SuggestedTrack]
+    alternatives: List[SuggestedTrack] = Field(
+        default_factory=list,
+        description=(
+            "Preserved for backward compatibility: contains the alternatives "
+            "for single-train requests."
+        ),
+    )
+    items: List[SuggestionResult] = Field(
+        default_factory=list,
+        description="Detailed suggestions for each processed train.",
+    )
 
 
 class CategoryRulePayload(BaseModel):

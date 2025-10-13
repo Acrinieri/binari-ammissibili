@@ -60,7 +60,7 @@ The UI runs on `http://localhost:3000` and calls the FastAPI server.
 | `/admin/config/priority-configs/{category}` | `PUT` | Saves a custom set of criteria/weights for a category. |
 | `/admin/config/priority-configs/{category}` | `DELETE` | Removes the custom profile and reverts to defaults. |
 
-Sample payload:
+Sample payload (single train):
 
 ```json
 {
@@ -84,6 +84,31 @@ Sample response:
   ]
 }
 ```
+
+È anche possibile inviare più treni in un'unica richiesta usando il campo `trains`:
+
+```json
+{
+  "trains": [
+    {
+      "train_code": "12345",
+      "train_length_m": 250,
+      "train_category": "IC",
+      "planned_track": "IV",
+      "is_prm": false
+    },
+    {
+      "train_code": "67890",
+      "train_length_m": 210,
+      "train_category": "REG",
+      "planned_track": null,
+      "is_prm": false
+    }
+  ]
+}
+```
+
+In questo caso la risposta includerà `items`, una voce per ogni treno elaborato, mentre il campo `alternatives` rimane per compatibilità con richieste singole.
 
 ## Customising the Dataset
 
