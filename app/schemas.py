@@ -105,20 +105,6 @@ class SuggestionRequest(BaseModel):
         json_schema_extra={
             "examples": [
                 {
-                    "train_code": "98765",
-                    "train_length_m": 320,
-                    "train_category": "INV",
-                    "is_prm": False,
-                    "planned_track": None,
-                },
-                {
-                    "train_code": "61234",
-                    "train_length_m": 250,
-                    "train_category": "IC",
-                    "is_prm": False,
-                    "planned_track": "IV",
-                },
-                {
                     "trains": [
                         {
                             "train_code": "61234",
@@ -131,8 +117,20 @@ class SuggestionRequest(BaseModel):
                             "train_code": "98765",
                             "train_length_m": 320,
                             "train_category": "INV",
-                            "is_prm": False,
+                            "is_prm": True,
+                            "planned_track": None,
                         },
+                    ]
+                },
+                {
+                    "trains": [
+                        {
+                            "train_code": "12345",
+                            "train_length_m": 200,
+                            "train_category": "REG",
+                            "is_prm": False,
+                            "planned_track": None,
+                        }
                     ]
                 },
             ]
