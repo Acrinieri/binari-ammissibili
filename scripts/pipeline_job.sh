@@ -36,10 +36,6 @@ if [[ "${IS_PRM}" == "true" ]]; then
   GENERATE_ARGS+=(--is-prm)
 fi
 
-if [[ -n "${TRACKS_OVERRIDE_FILE:-}" ]]; then
-  GENERATE_ARGS+=(--tracks-override-file "${TRACKS_OVERRIDE_FILE}")
-fi
-
 python -m scripts.generate_input "${GENERATE_ARGS[@]}"
 
 PIPELINE_ARGS=(

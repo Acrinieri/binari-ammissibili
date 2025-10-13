@@ -75,12 +75,6 @@ class SuggestionRequest(BaseModel):
     trains: List[TrainRequest] = Field(
         ..., min_length=1, description="List of trains to evaluate."
     )
-    tracks_override: Optional[Dict[str, TrackData]] = Field(
-        None,
-        description=(
-            "Optional dataset that replaces the default one when provided."
-        ),
-    )
 
     @model_validator(mode="before")
     @classmethod
@@ -102,10 +96,7 @@ class SuggestionRequest(BaseModel):
                     for key in legacy_keys
                     if key in value
                 }
-                result: Dict[str, Any] = {"trains": [train_payload]}
-                if "tracks_override" in value:
-                    result["tracks_override"] = value["tracks_override"]
-                return result
+                return {"trains": [train_payload]}
         elif isinstance(value, list):
             return {"trains": value}
         return value
@@ -119,20 +110,13 @@ class SuggestionRequest(BaseModel):
                     "train_category": "INV",
                     "is_prm": False,
                     "planned_track": None,
-                    "tracks_override": {
-                        "V": {
-                            "marciapiede_complessivo_m": 310,
-                            "marciapiede_alto_m": 150,
-                            "marciapiede_basso_m": 160,
-                            "capacita_funzionale_m": 280,
-                        },
-                        "XIV": {
-                            "marciapiede_complessivo_m": 246,
-                            "marciapiede_alto_m": 0,
-                            "marciapiede_basso_m": 246,
-                            "capacita_funzionale_m": 246,
-                        },
-                    },
+                },
+                {
+                    "train_code": "61234",
+                    "train_length_m": 250,
+                    "train_category": "IC",
+                    "is_prm": False,
+                    "planned_track": "IV",
                 },
                 {
                     "trains": [

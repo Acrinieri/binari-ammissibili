@@ -12,25 +12,11 @@ from ..schemas import (
     SuggestionRequest,
     SuggestionResponse,
     SuggestionResult,
-    TrackData,
     TrackDataset,
 )
 from ..services.track_selector import select_tracks
 
 router = APIRouter(prefix="/tracks", tags=["tracks"])
-
-
-def _to_plain_dataset(dataset: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    """Convert TrackData objects to plain dictionaries."""
-    plain: Dict[str, Dict[str, Any]] = {}
-    for name, data in dataset.items():
-        if isinstance(data, TrackData):
-            plain[name] = data.dict()
-        elif isinstance(data, dict):
-            plain[name] = data
-        else:
-            raise TypeError(f"Unsupported track data type for '{name}': {type(data)}")
-    return plain
 
 
 @router.get("", response_model=TrackDataset)
@@ -49,12 +35,8 @@ def get_suggestions(
 ) -> SuggestionResponse:
     """Compute admissible tracks for one or more requested trains."""
     try:
-        dataset = (
-            _to_plain_dataset(payload.tracks_override)
-            if payload.tracks_override
-            else load_tracks_dataset(db)
-        )
-    except (DatasetError, TypeError) as exc:
+        dataset = load_tracks_dataset(db)
+    except DatasetError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     category_rule_cache: Dict[str, Any] = {}

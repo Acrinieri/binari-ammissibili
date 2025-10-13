@@ -115,7 +115,6 @@ In questo caso la risposta includerà `items`, una voce per ogni treno elaborato
 - Usa la sezione “Gestione binari” dell’interfaccia React per aggiungere, modificare o eliminare binari: le modifiche vengono salvate subito nel database.
 - In alternativa puoi chiamare direttamente gli endpoint `/admin/tracks` mostrati sopra (ad es. per script di automazione).
 - Il file `app/data/tracks.json` resta come seed iniziale: viene letto solo se il database non contiene record.
-- Per test o simulazioni veloci puoi ancora inviare un dataset ad hoc tramite il campo `tracks_override` della richiesta a `/tracks/suggestions`.
 
 ## Frontend Notes
 

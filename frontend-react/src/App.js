@@ -28,6 +28,14 @@ const TRACK_FORM_DEFAULT = {
   capacita_funzionale_m: "",
 };
 
+const DEFAULT_TRAIN = {
+  trainCode: "",
+  trainLength: "",
+  trainCategory: "REG",
+  plannedTrack: "",
+  isPrm: false,
+};
+
 const toNumeric = (value) => {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) ? 0 : parsed;
@@ -55,13 +63,7 @@ function App() {
   const [rulesError, setRulesError] = useState("");
   const [priorityError, setPriorityError] = useState("");
 
-  const [form, setForm] = useState({
-    trainCode: "",
-    trainLength: "",
-    trainCategory: "REG",
-    plannedTrack: "",
-    isPrm: false,
-  });
+  const [trainForms, setTrainForms] = useState([DEFAULT_TRAIN]);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -140,10 +142,24 @@ function App() {
 
   const trackNames = useMemo(() => Object.keys(trackData).sort(), [trackData]);
 
-  const onFieldChange = (field) => (event) => {
+  const updateTrainField = (index, field) => (event) => {
     const value =
       field === "isPrm" ? event.target.checked : event.target.value;
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setTrainForms((prev) =>
+      prev.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const addTrainForm = () => {
+    setTrainForms((prev) => [...prev, { ...DEFAULT_TRAIN }]);
+  };
+
+  const removeTrainForm = (index) => {
+    setTrainForms((prev) =>
+      prev.length > 1 ? prev.filter((_, idx) => idx !== index) : prev
+    );
   };
 
   const handleSubmit = (event) => {
@@ -152,25 +168,57 @@ function App() {
     setSuggestions([]);
     setError("");
 
+    const payloadTrains = [];
+    for (const item of trainForms) {
+      const trainCode = item.trainCode.trim();
+      const length = Number(item.trainLength);
+      if (!trainCode || Number.isNaN(length) || length <= 0) {
+        setLoading(false);
+        setError("Compila tutti i campi richiesti per ogni treno.");
+        return;
+      }
+      payloadTrains.push({
+        train_code: trainCode,
+        train_length_m: length,
+        train_category: item.trainCategory,
+        planned_track: item.plannedTrack ? item.plannedTrack : null,
+        is_prm: item.isPrm,
+      });
+    }
+
     axios
-      .post(`${API_BASE}/tracks/suggestions`, {
-        train_code: form.trainCode,
-        train_length_m: Number(form.trainLength),
-        train_category: form.trainCategory,
-        planned_track: form.plannedTrack || null,
-        is_prm: form.isPrm,
-      })
+      .post(`${API_BASE}/tracks/suggestions`, { trains: payloadTrains })
       .then((res) => {
-        setSuggestions(res.data.alternatives || []);
-        if (!res.data.alternatives || res.data.alternatives.length === 0) {
+        const responseItems = Array.isArray(res.data.items)
+          ? res.data.items
+          : [];
+        const items =
+          responseItems.length > 0
+            ? responseItems
+            : payloadTrains.map((train, idx) => ({
+                train,
+                alternatives:
+                  idx === 0 ? res.data.alternatives || [] : [],
+              }));
+
+        setSuggestions(items);
+
+        const hasAlternatives = items.some(
+          (item) =>
+            Array.isArray(item.alternatives) &&
+            item.alternatives.length > 0
+        );
+        if (!hasAlternatives) {
           setError("Nessun binario compatibile trovato.");
+        } else {
+          setError("");
         }
       })
       .catch((err) => {
         const detail =
           err.response?.data?.detail ||
           "Errore durante il calcolo delle alternative.";
-        setError(detail);
+        setError(Array.isArray(detail) ? detail.join(" ") : detail);
       })
       .finally(() => setLoading(false));
   };
@@ -489,70 +537,95 @@ function App() {
       {/* Sezione calcolo suggerimenti */}
       <section className="section-card section-card--spaced">
         <form onSubmit={handleSubmit} className="stack">
-          <div className="form-grid form-grid--tight">
-            <label>
-              <span>Numero treno</span>
-              <input
-                type="text"
-                required
-                value={form.trainCode}
-                onChange={onFieldChange("trainCode")}
-              />
-            </label>
+          {trainForms.map((train, index) => (
+            <div key={`train-${index}`} className="stack-sm">
+              <h3 className="section-subheading">Treno {index + 1}</h3>
+              <div className="form-grid form-grid--tight">
+                <label>
+                  <span>Numero treno</span>
+                  <input
+                    type="text"
+                    required
+                    value={train.trainCode}
+                    onChange={updateTrainField(index, "trainCode")}
+                  />
+                </label>
 
-            <label>
-              <span>Lunghezza (m)</span>
-              <input
-                type="number"
-                min="1"
-                required
-                value={form.trainLength}
-                onChange={onFieldChange("trainLength")}
-              />
-            </label>
+                <label>
+                  <span>Lunghezza (m)</span>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={train.trainLength}
+                    onChange={updateTrainField(index, "trainLength")}
+                  />
+                </label>
 
-            <label>
-              <span>Categoria treno</span>
-              <select
-                value={form.trainCategory}
-                onChange={onFieldChange("trainCategory")}
-              >
-                {TRAIN_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <label>
+                  <span>Categoria treno</span>
+                  <select
+                    value={train.trainCategory}
+                    onChange={updateTrainField(index, "trainCategory")}
+                  >
+                    {TRAIN_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label>
-              <span>Binario previsto</span>
-              <select
-                value={form.plannedTrack}
-                onChange={onFieldChange("plannedTrack")}
-              >
-                <option value="">Non specificato</option>
-                {trackNames.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <label>
+                  <span>Binario previsto</span>
+                  <select
+                    value={train.plannedTrack}
+                    onChange={updateTrainField(index, "plannedTrack")}
+                  >
+                    <option value="">Non specificato</option>
+                    {trackNames.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="actions-row actions-row--between">
+                <label className="inline-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={train.isPrm}
+                    onChange={updateTrainField(index, "isPrm")}
+                  />
+                  Treno PRM
+                </label>
+                {trainForms.length > 1 && (
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    onClick={() => removeTrainForm(index)}
+                  >
+                    Rimuovi treno
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          <div className="actions-row actions-row--between">
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={addTrainForm}
+            >
+              Aggiungi treno
+            </button>
+            <button type="submit" disabled={loading} className="button-primary">
+              {loading ? "Calcolo in corso..." : "Calcola alternative"}
+            </button>
           </div>
-
-          <label className="inline-checkbox">
-            <input
-              type="checkbox"
-              checked={form.isPrm}
-              onChange={onFieldChange("isPrm")}
-            />
-            Treno PRM
-          </label>
-
-          <button type="submit" disabled={loading} className="button-primary">
-            {loading ? "Calcolo in corso..." : "Calcola alternative"}
-          </button>
         </form>
 
         {error && (
@@ -568,14 +641,42 @@ function App() {
         {loading ? (
           <p>Calcolo in corso...</p>
         ) : suggestions.length > 0 ? (
-          <ol>
-            {suggestions.map(({ track, reason }) => (
-              <li key={track} className="suggestion-item">
-                <div className="suggestion-item__track">{track}</div>
-                <div className="suggestion-item__reason">{reason}</div>
-              </li>
-            ))}
-          </ol>
+          <div className="stack">
+            {suggestions.map((item, index) => {
+              const train = item.train || {};
+              const headingCode = train.train_code || `#${index + 1}`;
+              return (
+                <div key={`${headingCode}-${index}`} className="stack-sm">
+                  <h3 className="section-subheading">
+                    Treno {train.train_code ?? index + 1}
+                  </h3>
+                  <p className="text-muted">
+                    {`Categoria ${train.train_category ?? "?"} • Lunghezza ${
+                      train.train_length_m ?? "?"
+                    } m`}
+                    {train.planned_track
+                      ? ` • Binario previsto ${train.planned_track}`
+                      : ""}
+                    {train.is_prm ? " • PRM" : ""}
+                  </p>
+                  {item.alternatives && item.alternatives.length > 0 ? (
+                    <ol>
+                      {item.alternatives.map(({ track, reason }) => (
+                        <li key={`${track}-${headingCode}`} className="suggestion-item">
+                          <div className="suggestion-item__track">{track}</div>
+                          <div className="suggestion-item__reason">{reason}</div>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="text-muted">
+                      Nessun binario compatibile trovato per questo treno.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <p className="text-muted">
             Compila il form per ottenere una nuova valutazione.
