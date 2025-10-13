@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, PositiveInt, model_validator
+from pydantic import BaseModel, Field, PositiveInt, field_validator, model_validator
 
 
 class TrackBase(BaseModel):
@@ -69,6 +69,13 @@ class TrainRequest(BaseModel):
     planned_track: Optional[str] = Field(
         None, description="Planned track name (optional)."
     )
+
+    @field_validator("train_category", mode="before")
+    @classmethod
+    def _normalise_category(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value).strip().upper()
 
 
 class SuggestionRequest(BaseModel):
