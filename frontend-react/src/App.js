@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import "./App.css";
 
@@ -6,6 +6,34 @@ const API_BASE =
   process.env.REACT_APP_API_BASE ??
   window.__BINARI_API_BASE__ ??
   "http://127.0.0.1:8000";
+
+const ADMIN_TOKEN_HEADER = "X-Admin-Token";
+const ADMIN_STORAGE_KEY = "binariAdminToken";
+
+const hasWindow =
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+const getStoredAdminToken = () => {
+  if (!hasWindow) {
+    return "";
+  }
+  return window.localStorage.getItem(ADMIN_STORAGE_KEY) ?? "";
+};
+
+if (!axios.__BINARI_ADMIN_INTERCEPTOR_SET) {
+  axios.interceptors.request.use((config) => {
+    const url = config.url ?? "";
+    if (url.includes("/admin")) {
+      const token = getStoredAdminToken();
+      if (token) {
+        config.headers = config.headers ?? {};
+        config.headers[ADMIN_TOKEN_HEADER] = token;
+      }
+    }
+    return config;
+  });
+  axios.__BINARI_ADMIN_INTERCEPTOR_SET = true;
+}
 
 const TRAIN_CATEGORIES = [
   "REG",
@@ -76,6 +104,30 @@ function App() {
   const [editingPriority, setEditingPriority] = useState(null);
   const [ruleMessage, setRuleMessage] = useState("");
   const [priorityMessage, setPriorityMessage] = useState("");
+  const [adminToken, setAdminToken] = useState(() => getStoredAdminToken());
+  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const hasAdminAccess = Boolean(adminToken);
+
+  useEffect(() => {
+    if (!hasWindow) {
+      return;
+    }
+    if (adminToken) {
+      window.localStorage.setItem(ADMIN_STORAGE_KEY, adminToken);
+    } else {
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY);
+    }
+  }, [adminToken]);
+
+  useEffect(() => {
+    if (adminToken) {
+      axios.defaults.headers.common[ADMIN_TOKEN_HEADER] = adminToken;
+    } else {
+      delete axios.defaults.headers.common[ADMIN_TOKEN_HEADER];
+    }
+  }, [adminToken]);
 
   const availableCriteria = [
     { key: "priority_class", label: "Priorita di categoria" },
@@ -94,51 +146,126 @@ function App() {
     return option ? option.label : key;
   };
 
-  const refreshAll = () => {
+  const loadTracks = useCallback(() => {
     setLoadingDataset(true);
+    axios
+      .get(`${API_BASE}/tracks`)
+      .then((response) => {
+        setTrackData(response.data.tracks || {});
+        setDatasetError("");
+      })
+      .catch(() => {
+        setDatasetError(
+          "Impossibile caricare i dati dei binari. Backend attivo?"
+        );
+      })
+      .finally(() => setLoadingDataset(false));
+  }, []);
+
+  const loadAdminData = useCallback(() => {
+    if (!hasAdminAccess) {
+      setAdminTracks([]);
+      setCategoryRules([]);
+      setPriorityConfigs([]);
+      setAdminError("");
+      setRulesError("");
+      setPriorityError("");
+      return;
+    }
+
     Promise.allSettled([
-      axios.get(`${API_BASE}/tracks`),
       axios.get(`${API_BASE}/admin/tracks`),
       axios.get(`${API_BASE}/admin/config/category-rules`),
       axios.get(`${API_BASE}/admin/config/priority-configs`),
-    ])
-      .then(([tracksRes, adminRes, rulesRes, priorityRes]) => {
-        if (tracksRes.status === "fulfilled") {
-          setTrackData(tracksRes.value.data.tracks || {});
-          setDatasetError("");
-        } else {
-          setDatasetError(
-            "Impossibile caricare i dati dei binari. Backend attivo?"
-          );
-        }
+    ]).then(([tracksRes, rulesRes, priorityRes]) => {
+      if (tracksRes.status === "fulfilled") {
+        setAdminTracks(tracksRes.value.data || []);
+        setAdminError("");
+      } else {
+        setAdminError("Impossibile caricare la lista dei binari.");
+      }
 
-        if (adminRes.status === "fulfilled") {
-          setAdminTracks(adminRes.value.data || []);
-          setAdminError("");
-        } else {
-          setAdminError("Impossibile caricare la lista dei binari.");
-        }
+      if (rulesRes.status === "fulfilled") {
+        setCategoryRules(rulesRes.value.data || []);
+        setRulesError("");
+      } else {
+        setRulesError("Impossibile caricare le regole di categoria.");
+      }
 
-        if (rulesRes.status === "fulfilled") {
-          setCategoryRules(rulesRes.value.data || []);
-          setRulesError("");
-        } else {
-          setRulesError("Impossibile caricare le regole di categoria.");
-        }
+      if (priorityRes.status === "fulfilled") {
+        setPriorityConfigs(priorityRes.value.data || []);
+        setPriorityError("");
+      } else {
+        setPriorityError("Impossibile caricare le priorita configurate.");
+      }
+    });
+  }, [hasAdminAccess]);
 
-        if (priorityRes.status === "fulfilled") {
-          setPriorityConfigs(priorityRes.value.data || []);
-          setPriorityError("");
-        } else {
-          setPriorityError("Impossibile caricare le priorita configurate.");
-        }
-      })
-      .finally(() => setLoadingDataset(false));
-  };
+  const refreshAll = useCallback(() => {
+    loadTracks();
+    loadAdminData();
+  }, [loadTracks, loadAdminData]);
 
   useEffect(() => {
-    refreshAll();
-  }, []);
+    loadTracks();
+  }, [loadTracks]);
+
+  useEffect(() => {
+    loadAdminData();
+  }, [loadAdminData]);
+
+  const onLoginFieldChange = (field) => (event) => {
+    const value = event.target.value;
+    setLoginForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const submitLogin = (event) => {
+    event.preventDefault();
+    const username = loginForm.username.trim();
+    const password = loginForm.password;
+    if (!username || !password) {
+      setLoginError("Inserisci username e password.");
+      return;
+    }
+
+    setLoginError("");
+    setLoginLoading(true);
+    axios
+      .post(`${API_BASE}/admin/login`, {
+        username,
+        password,
+      })
+      .then((response) => {
+        const token = response.data?.token;
+        if (token) {
+          setAdminToken(token);
+          setLoginForm({ username: "", password: "" });
+          setLoginError("");
+        } else {
+          setLoginError("Risposta del server non valida.");
+        }
+      })
+      .catch((error) => {
+        const detail =
+          error.response?.data?.detail || "Credenziali non valide.";
+        setLoginError(detail);
+      })
+      .finally(() => setLoginLoading(false));
+  };
+
+  const handleLogout = () => {
+    setAdminToken("");
+    setLoginForm({ username: "", password: "" });
+    setAdminTracks([]);
+    setCategoryRules([]);
+    setPriorityConfigs([]);
+    setAdminMessage("");
+    setAdminError("");
+    setRuleMessage("");
+    setRulesError("");
+    setPriorityMessage("");
+    setPriorityError("");
+  };
 
   const trackNames = useMemo(() => Object.keys(trackData).sort(), [trackData]);
 
@@ -524,6 +651,54 @@ function App() {
       });
   };
 
+  if (!hasAdminAccess) {
+    return (
+      <div className="app-container">
+        <section className="section-card section-card--spaced login-section">
+          <h1>Area amministrativa</h1>
+          <p className="text-muted">
+            Inserisci le credenziali fornite per gestire dataset, regole e
+            priorità dei binari.
+          </p>
+          <form onSubmit={submitLogin} className="stack">
+            <label>
+              <span>Username</span>
+              <input
+                type="text"
+                autoComplete="username"
+                value={loginForm.username}
+                onChange={onLoginFieldChange("username")}
+                disabled={loginLoading}
+              />
+            </label>
+            <label>
+              <span>Password</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={loginForm.password}
+                onChange={onLoginFieldChange("password")}
+                disabled={loginLoading}
+              />
+            </label>
+            {loginError && (
+              <div className="feedback feedback--error">{loginError}</div>
+            )}
+            <div className="actions-row actions-row--end">
+              <button
+                type="submit"
+                className="button-primary"
+                disabled={loginLoading}
+              >
+                {loginLoading ? "Accesso..." : "Accedi"}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       <header className="section-intro">
@@ -532,6 +707,11 @@ function App() {
           Inserisci i dettagli del treno per ottenere le alternative disponibili
           e gestisci i binari del database.
         </p>
+        <div className="actions-row actions-row--end">
+          <button type="button" className="button-secondary" onClick={handleLogout}>
+            Esci
+          </button>
+        </div>
       </header>
 
       {/* Sezione calcolo suggerimenti */}

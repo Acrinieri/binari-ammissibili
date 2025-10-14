@@ -116,6 +116,13 @@ In questo caso la risposta includerà `items`, una voce per ogni treno elaborato
 - In alternativa puoi chiamare direttamente gli endpoint `/admin/tracks` mostrati sopra (ad es. per script di automazione).
 - Il file `app/data/tracks.json` resta come seed iniziale: viene letto solo se il database non contiene record.
 
+### Accesso all'area amministrativa
+
+- L'accesso agli endpoint `/admin/**` richiede il login tramite `POST /admin/login`, che valida le credenziali definite nelle variabili d'ambiente `ADMIN_USERNAME` e `ADMIN_PASSWORD`.
+- In caso di autenticazione riuscita viene restituito un token firmato (header `X-Admin-Token`) con scadenza configurabile tramite `ADMIN_TOKEN_TTL`. Il token viene generato usando il segreto `ADMIN_API_KEY`.
+- L'interfaccia React mostra un form di login e conserva il token in `localStorage`, aggiungendolo automaticamente alle richieste amministrative; senza token valido il server risponde `401 Unauthorized`.
+- Se il backend non trova le variabili richieste (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_API_KEY`) rifiuta le operazioni admin con `503 Service Unavailable` per evitare esposizioni accidentali.
+
 ## Frontend Notes
 
 - The form supports train classes such as `REG`, `IC`, `ES*`, `FR`, `INV`, etc.

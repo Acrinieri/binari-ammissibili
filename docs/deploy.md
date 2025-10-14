@@ -24,7 +24,7 @@ Review or customise environment variables:
 
 ```bash
 cp .env.example .env
-# edit .env if needed (not required for the default setup)
+# edit .env to set ADMIN_USERNAME, ADMIN_PASSWORD e ADMIN_API_KEY
 ```
 
 Build and start the stack:

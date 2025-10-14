@@ -1,0 +1,354 @@
+{
+  "trains": [
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "17099",
+      "train_length_m": 210
+    },
+    {
+      "is_prm": true,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16538",
+      "train_length_m": 212
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16816",
+      "train_length_m": 214
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16028",
+      "train_length_m": 216
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16358",
+      "train_length_m": 218
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "17212",
+      "train_length_m": 220
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94360",
+      "train_length_m": 222
+    },
+    {
+      "is_prm": true,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94370",
+      "train_length_m": 224
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94336",
+      "train_length_m": 226
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93427",
+      "train_length_m": 228
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94330",
+      "train_length_m": 230
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94314",
+      "train_length_m": 232
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94334",
+      "train_length_m": 234
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93386",
+      "train_length_m": 236
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93394",
+      "train_length_m": 238
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94345",
+      "train_length_m": 240
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94308",
+      "train_length_m": 242
+    },
+    {
+      "is_prm": true,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94332",
+      "train_length_m": 244
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93338",
+      "train_length_m": 246
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94340",
+      "train_length_m": 248
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94338",
+      "train_length_m": 250
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93318",
+      "train_length_m": 252
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94342",
+      "train_length_m": 254
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94352",
+      "train_length_m": 256
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93322",
+      "train_length_m": 258
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "94301",
+      "train_length_m": 260
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93334",
+      "train_length_m": 262
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93320",
+      "train_length_m": 264
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93336",
+      "train_length_m": 266
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93324",
+      "train_length_m": 268
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "93340",
+      "train_length_m": 270
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "3600",
+      "train_length_m": 272
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "17176",
+      "train_length_m": 274
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16754",
+      "train_length_m": 276
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16756",
+      "train_length_m": 278
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "ES*",
+      "train_code": "9401",
+      "train_length_m": 280
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16292",
+      "train_length_m": 282
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "IC",
+      "train_code": "774",
+      "train_length_m": 284
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "IC",
+      "train_code": "1574",
+      "train_length_m": 286
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "ES*",
+      "train_code": "9700",
+      "train_length_m": 288
+    },
+    {
+      "is_prm": true,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "3961",
+      "train_length_m": 290
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "17081",
+      "train_length_m": 292
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "ES*",
+      "train_code": "8970",
+      "train_length_m": 294
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16294",
+      "train_length_m": 296
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16048",
+      "train_length_m": 298
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "16008",
+      "train_length_m": 300
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "17162",
+      "train_length_m": 302
+    },
+    {
+      "is_prm": true,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "22472",
+      "train_length_m": 304
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "17031",
+      "train_length_m": 306
+    },
+    {
+      "is_prm": false,
+      "planned_track": null,
+      "train_category": "REG",
+      "train_code": "3478",
+      "train_length_m": 308
+    }
+  ]
+}
