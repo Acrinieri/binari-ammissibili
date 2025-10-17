@@ -10,6 +10,7 @@ frontend-react/node_modules/
 frontend-react/build/
 frontend-react/.env.local
 .npm/
+.env
 
 # General
 .DS_Store

@@ -34,8 +34,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Categoria del treno (default: REG).",
     )
     parser.add_argument(
-        "--planned-track",
-        help="Binario previsto (opzionale).",
+        "--planned-signal",
+        help="Segnale previsto (opzionale, usare suffisso 'f' per arrivi).",
     )
     parser.add_argument(
         "--is-prm",
@@ -53,7 +53,7 @@ def main() -> None:
         "train_code": args.train_code,
         "train_length_m": args.train_length,
         "train_category": args.train_category,
-        "planned_track": args.planned_track if args.planned_track else None,
+        "planned_signal": args.planned_signal if args.planned_signal else None,
         "is_prm": bool(args.is_prm),
     }
 

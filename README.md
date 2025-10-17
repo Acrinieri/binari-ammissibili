@@ -67,7 +67,7 @@ Sample payload (single train):
   "train_code": "12345",
   "train_length_m": 250,
   "train_category": "IC",
-  "planned_track": "IV",
+  "planned_signal": "104",
   "is_prm": false
 }
 ```
@@ -78,7 +78,8 @@ Sample response:
 {
   "alternatives": [
     {
-      "track": "III",
+      "track": "103",
+      "track_name": "III",
       "reason": "Marciapiede da 449 m >= lunghezza treno 250 m. Fascia prioritaria per lunga percorrenza (2-13). Adiacente al binario previsto. Marciapiede identico al previsto. Disponibile marciapiede alto."
     }
   ]
@@ -94,14 +95,14 @@ Sample response:
       "train_code": "12345",
       "train_length_m": 250,
       "train_category": "IC",
-      "planned_track": "IV",
+      "planned_signal": "104",
       "is_prm": false
     },
     {
       "train_code": "67890",
       "train_length_m": 210,
       "train_category": "REG",
-      "planned_track": null,
+      "planned_signal": null,
       "is_prm": false
     }
   ]
@@ -110,11 +111,14 @@ Sample response:
 
 In questo caso la risposta includerà `items`, una voce per ogni treno elaborato, mentre il campo `alternatives` rimane per compatibilità con richieste singole.
 
+> **Nota segnali:** sia l'input (`planned_signal`) sia l'output (`alternatives[].track`) utilizzano il codice di segnale del binario. Il suffisso `f` (es. `117f`) può essere aggiunto per distinguere i casi di arrivo e viene propagato automaticamente sulle alternative. Ogni elemento di `alternatives` espone anche `track_name` con il nome del binario; quando un segnale non è mappato, il servizio restituisce il placeholder `TBD`.
+
 ## Customising the Dataset
 
-- Usa la sezione “Gestione binari” dell’interfaccia React per aggiungere, modificare o eliminare binari: le modifiche vengono salvate subito nel database.
+- Usa la sezione "Gestione binari" dell'interfaccia React per aggiungere, modificare o eliminare binari: le modifiche vengono salvate subito nel database.
 - In alternativa puoi chiamare direttamente gli endpoint `/admin/tracks` mostrati sopra (ad es. per script di automazione).
 - Il file `app/data/tracks.json` resta come seed iniziale: viene letto solo se il database non contiene record.
+- Ogni binario memorizza anche il `signal_code`: in fase di seed (e alla creazione da UI) viene assegnato automaticamente secondo la mappa `MAPPA_BINARI`, con valore di fallback `TBD` se il nome non è mappato; il campo può essere personalizzato dall'interfaccia admin o via API.
 
 ### Accesso all'area amministrativa
 

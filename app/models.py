@@ -11,6 +11,7 @@ class Track(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(64), unique=True, nullable=False)
+    signal_code = Column(String(16), nullable=False, default="TBD")
     marciapiede_complessivo_m = Column(Integer, nullable=False, default=0)
     marciapiede_alto_m = Column(Integer, nullable=False, default=0)
     marciapiede_basso_m = Column(Integer, nullable=False, default=0)

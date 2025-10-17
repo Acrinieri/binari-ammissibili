@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, PositiveInt, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, PositiveInt, field_validator, model_validator
+
+from .constants import DEFAULT_SIGNAL_CODE
 
 
 class TrackBase(BaseModel):
@@ -25,7 +27,12 @@ class TrackBase(BaseModel):
 
 
 class TrackData(TrackBase):
-    pass
+    signal_code: str = Field(
+        DEFAULT_SIGNAL_CODE,
+        min_length=1,
+        max_length=16,
+        description="Signal identification code associated with the track.",
+    )
 
 
 class TrackDataset(BaseModel):
@@ -34,6 +41,9 @@ class TrackDataset(BaseModel):
 
 class TrackCreate(TrackBase):
     name: str = Field(..., min_length=1, max_length=64)
+    signal_code: str | None = Field(
+        None, min_length=1, max_length=16, description="Override for the signal code."
+    )
 
 
 class TrackUpdate(BaseModel):
@@ -45,6 +55,12 @@ class TrackUpdate(BaseModel):
         None,
         description="Functional capacity length (metres).",
     )
+    signal_code: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=16,
+        description="Signal identification code associated with the track.",
+    )
 
 
 from pydantic import ConfigDict
@@ -53,6 +69,12 @@ from pydantic import ConfigDict
 class TrackDetail(TrackBase):
     id: int
     name: str
+    signal_code: str = Field(
+        DEFAULT_SIGNAL_CODE,
+        min_length=1,
+        max_length=16,
+        description="Signal identification code associated with the track.",
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -66,8 +88,13 @@ class TrainRequest(BaseModel):
     is_prm: bool = Field(
         False, description="Flag if the train requires PRM-compliant facilities."
     )
-    planned_track: Optional[str] = Field(
-        None, description="Planned track name (optional)."
+    planned_signal: Optional[str] = Field(
+        None,
+        description=(
+            "Planned signal code (numeric string, optional). "
+            "Use suffix 'f' for arrival direction when needed."
+        ),
+        validation_alias=AliasChoices("planned_signal", "planned_track"),
     )
 
     @field_validator("train_category", mode="before")
@@ -95,6 +122,7 @@ class SuggestionRequest(BaseModel):
                 "train_length_m",
                 "train_category",
                 "is_prm",
+                "planned_signal",
                 "planned_track",
             }
             if legacy_keys.intersection(value.keys()):
@@ -118,21 +146,21 @@ class SuggestionRequest(BaseModel):
                             "train_length_m": 250,
                             "train_category": "IC",
                             "is_prm": False,
-                            "planned_track": "IV",
+                            "planned_signal": "104",
                         },
                         {
                             "train_code": "98765",
                             "train_length_m": 320,
                             "train_category": "REG",
                             "is_prm": True,
-                            "planned_track": None,
+                            "planned_signal": None,
                         },
                         {
                             "train_code": "99887",
                             "train_length_m": 280,
                             "train_category": "INV",
                             "is_prm": False,
-                            "planned_track": None,
+                            "planned_signal": "118f",
                         },
                     ]
                 },
@@ -143,7 +171,7 @@ class SuggestionRequest(BaseModel):
                             "train_length_m": 200,
                             "train_category": "REG",
                             "is_prm": False,
-                            "planned_track": None,
+                            "planned_signal": None,
                         }
                     ]
                 },
@@ -153,7 +181,14 @@ class SuggestionRequest(BaseModel):
 
 
 class SuggestedTrack(BaseModel):
-    track: str
+    track: str = Field(
+        ...,
+        description="Signal code associated with the suggested track (with optional suffix f).",
+    )
+    track_name: Optional[str] = Field(
+        None,
+        description="Human-readable track name associated with the signal code.",
+    )
     reason: str
 
 

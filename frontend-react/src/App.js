@@ -54,13 +54,14 @@ const TRACK_FORM_DEFAULT = {
   marciapiede_alto_m: "0",
   marciapiede_basso_m: "0",
   capacita_funzionale_m: "",
+  signal_code: "",
 };
 
 const DEFAULT_TRAIN = {
   trainCode: "",
   trainLength: "",
   trainCategory: "REG",
-  plannedTrack: "",
+  plannedSignal: "",
   isPrm: false,
 };
 
@@ -72,12 +73,18 @@ const toOptionalNumeric = (value) =>
   value === "" || value === null ? null : Number.parseInt(value, 10) || 0;
 
 function buildPayload(data) {
+  const signalCode =
+    typeof data.signal_code === "string" && data.signal_code.trim().length > 0
+      ? data.signal_code.trim()
+      : null;
+
   return {
     name: data.name.trim(),
     marciapiede_complessivo_m: toNumeric(data.marciapiede_complessivo_m),
     marciapiede_alto_m: toNumeric(data.marciapiede_alto_m),
     marciapiede_basso_m: toNumeric(data.marciapiede_basso_m),
     capacita_funzionale_m: toOptionalNumeric(data.capacita_funzionale_m),
+    signal_code: signalCode,
   };
 }
 
@@ -269,6 +276,48 @@ function App() {
 
   const trackNames = useMemo(() => Object.keys(trackData).sort(), [trackData]);
 
+  const trackSignalOptions = useMemo(() => {
+    return Object.entries(trackData)
+      .filter(([, info]) => {
+        const code = info.signal_code;
+        return code && String(code).trim() && String(code).toUpperCase() !== "TBD";
+      })
+      .map(([name, info]) => {
+        const code = String(info.signal_code).trim();
+        return {
+          value: code,
+          label: `${code} (${name})`,
+          name,
+        };
+      })
+      .sort((a, b) => a.value.localeCompare(b.value));
+  }, [trackData]);
+
+  const signalToTrackName = useMemo(() => {
+    const mapping = {};
+    Object.entries(trackData).forEach(([name, info]) => {
+      const code = (info.signal_code ?? "").toString().trim();
+      if (code) {
+        mapping[code.toUpperCase()] = name;
+      }
+    });
+    return mapping;
+  }, [trackData]);
+
+  const describeSignal = (value) => {
+    if (!value) {
+      return { signal: "", base: "", trackName: null };
+    }
+    const raw = String(value).trim();
+    if (!raw) {
+      return { signal: "", base: "", trackName: null };
+    }
+    const hasSuffix = raw.toLowerCase().endsWith("f");
+    const base = hasSuffix ? raw.slice(0, -1) : raw;
+    const trackName = signalToTrackName[base.toUpperCase()] ?? null;
+    return { signal: raw, base, trackName };
+  };
+
   const updateTrainField = (index, field) => (event) => {
     const value =
       field === "isPrm" ? event.target.checked : event.target.value;
@@ -304,13 +353,13 @@ function App() {
         setError("Compila tutti i campi richiesti per ogni treno.");
         return;
       }
-      payloadTrains.push({
-        train_code: trainCode,
-        train_length_m: length,
-        train_category: item.trainCategory,
-        planned_track: item.plannedTrack ? item.plannedTrack : null,
-        is_prm: item.isPrm,
-      });
+    payloadTrains.push({
+      train_code: trainCode,
+      train_length_m: length,
+      train_category: item.trainCategory,
+      planned_signal: item.plannedSignal ? item.plannedSignal : null,
+      is_prm: item.isPrm,
+    });
     }
 
     axios
@@ -400,6 +449,7 @@ function App() {
         track.capacita_funzionale_m !== null && track.capacita_funzionale_m !== undefined
           ? String(track.capacita_funzionale_m)
           : "",
+      signal_code: track.signal_code ?? "",
     });
     resetAdminFeedback();
   };
@@ -757,15 +807,18 @@ function App() {
                 </label>
 
                 <label>
-                  <span>Binario previsto</span>
+                  <span>Segnale previsto</span>
                   <select
-                    value={train.plannedTrack}
-                    onChange={updateTrainField(index, "plannedTrack")}
+                    value={train.plannedSignal}
+                    onChange={updateTrainField(index, "plannedSignal")}
                   >
                     <option value="">Non specificato</option>
-                    {trackNames.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
+                    {trackSignalOptions.map((option) => (
+                      <option
+                        key={`${option.value}-${option.name}`}
+                        value={option.value}
+                      >
+                        {option.label}
                       </option>
                     ))}
                   </select>
@@ -834,19 +887,34 @@ function App() {
                     {`Categoria ${train.train_category ?? "?"} • Lunghezza ${
                       train.train_length_m ?? "?"
                     } m`}
-                    {train.planned_track
-                      ? ` • Binario previsto ${train.planned_track}`
+                    {train.planned_signal
+                      ? (() => {
+                          const info = describeSignal(train.planned_signal);
+                          const trackLabel = info.trackName
+                            ? ` (Binario ${info.trackName})`
+                            : "";
+                          return ` • Segnale previsto ${info.signal}${trackLabel}`;
+                        })()
                       : ""}
                     {train.is_prm ? " • PRM" : ""}
                   </p>
                   {item.alternatives && item.alternatives.length > 0 ? (
                     <ol>
-                      {item.alternatives.map(({ track, reason }) => (
-                        <li key={`${track}-${headingCode}`} className="suggestion-item">
-                          <div className="suggestion-item__track">{track}</div>
-                          <div className="suggestion-item__reason">{reason}</div>
-                        </li>
-                      ))}
+                      {item.alternatives.map(({ track, track_name, reason }) => {
+                        const info = describeSignal(track);
+                        const resolvedName = track_name || info.trackName;
+                        const trackLabel = resolvedName
+                          ? ` (Binario ${resolvedName})`
+                          : "";
+                        return (
+                          <li key={`${track}-${headingCode}`} className="suggestion-item">
+                            <div className="suggestion-item__track">
+                              {`Segnale ${info.signal}${trackLabel}`}
+                            </div>
+                            <div className="suggestion-item__reason">{reason}</div>
+                          </li>
+                        );
+                      })}
                     </ol>
                   ) : (
                     <p className="text-muted">
@@ -879,6 +947,7 @@ function App() {
               <thead>
                 <tr>
                   <th>Binario</th>
+                  <th>Segnale</th>
                   <th className="text-right">Totale (m)</th>
                   <th className="text-right">Alto (m)</th>
                   <th className="text-right">Basso (m)</th>
@@ -891,6 +960,7 @@ function App() {
                   return (
                     <tr key={name}>
                       <td>{name}</td>
+                      <td>{track.signal_code || "-"}</td>
                       <td className="text-right">
                         {track.marciapiede_complessivo_m}
                       </td>
@@ -937,6 +1007,15 @@ function App() {
                 required
                 value={newTrack.name}
                 onChange={onNewTrackFieldChange("name")}
+              />
+            </label>
+            <label>
+              <span>Numero segnale</span>
+              <input
+                type="text"
+                value={newTrack.signal_code}
+                onChange={onNewTrackFieldChange("signal_code")}
+                placeholder="(auto se vuoto)"
               />
             </label>
             <label>
@@ -990,6 +1069,7 @@ function App() {
             <thead>
               <tr>
                 <th>Nome</th>
+                <th>Segnale</th>
                 <th className="text-right">Totale</th>
                 <th className="text-right">Alto</th>
                 <th className="text-right">Basso</th>
@@ -1012,6 +1092,19 @@ function App() {
                         />
                       ) : (
                         track.name
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editingTrack.signal_code ?? ""}
+                          onChange={onEditTrackFieldChange("signal_code")}
+                          className="table-input"
+                          placeholder="(auto se vuoto)"
+                        />
+                      ) : (
+                        track.signal_code || "-"
                       )}
                     </td>
                     <td className="text-right">

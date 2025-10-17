@@ -9,6 +9,11 @@ from typing import Any, Dict, List
 from sqlalchemy.orm import Session
 
 from .models import Track
+from .services.track_signals import (
+    apply_signal_code_defaults,
+    ensure_signal_code_column,
+    resolve_signal_code,
+)
 
 DATA_FILE = Path(__file__).resolve().parent / "data" / "tracks.json"
 
@@ -19,8 +24,11 @@ class DatasetError(RuntimeError):
 
 def ensure_tracks_seeded(session: Session) -> None:
     """Populate the database from the JSON file if the table is empty."""
+    ensure_signal_code_column(session)
+
     has_tracks = session.query(Track).first()
     if has_tracks:
+        apply_signal_code_defaults(session)
         return
 
     if not DATA_FILE.exists():
@@ -53,6 +61,7 @@ def ensure_tracks_seeded(session: Session) -> None:
         session.add(
             Track(
                 name=name,
+                signal_code=resolve_signal_code(name),
                 marciapiede_complessivo_m=_int(info.get("marciapiede_complessivo_m")),
                 marciapiede_alto_m=_int(info.get("marciapiede_alto_m")),
                 marciapiede_basso_m=_int(info.get("marciapiede_basso_m")),
@@ -60,6 +69,7 @@ def ensure_tracks_seeded(session: Session) -> None:
             )
         )
     session.commit()
+    apply_signal_code_defaults(session)
 
 
 def load_tracks_dataset(session: Session) -> Dict[str, Dict[str, Any]]:
@@ -68,6 +78,7 @@ def load_tracks_dataset(session: Session) -> Dict[str, Dict[str, Any]]:
     tracks: List[Track] = session.query(Track).order_by(Track.name).all()
     for track in tracks:
         result[track.name] = {
+            "signal_code": track.signal_code,
             "marciapiede_complessivo_m": track.marciapiede_complessivo_m,
             "marciapiede_alto_m": track.marciapiede_alto_m,
             "marciapiede_basso_m": track.marciapiede_basso_m,

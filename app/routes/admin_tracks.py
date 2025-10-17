@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from ..constants import DEFAULT_SIGNAL_CODE
 from ..database import get_db
 from ..models import Track
 from ..schemas import TrackCreate, TrackDetail, TrackUpdate
+from ..services.track_signals import resolve_signal_code
 
 router = APIRouter(prefix="/admin/tracks", tags=["admin"])
 
@@ -23,8 +25,14 @@ def list_tracks(db: Session = Depends(get_db)) -> list[TrackDetail]:
 
 @router.post("", response_model=TrackDetail, status_code=status.HTTP_201_CREATED)
 def create_track(payload: TrackCreate, db: Session = Depends(get_db)) -> TrackDetail:
+    raw_signal = (payload.signal_code or "").strip()
+    signal_code = raw_signal or resolve_signal_code(payload.name)
+    if not signal_code:
+        signal_code = DEFAULT_SIGNAL_CODE
+
     track = Track(
         name=payload.name.strip(),
+        signal_code=signal_code,
         marciapiede_complessivo_m=payload.marciapiede_complessivo_m,
         marciapiede_alto_m=payload.marciapiede_alto_m,
         marciapiede_basso_m=payload.marciapiede_basso_m,
@@ -56,6 +64,7 @@ def update_track(
 ) -> TrackDetail:
     track = _get_track_or_404(db, track_id)
 
+    name_updated = False
     if payload.name is not None:
         new_name = payload.name.strip()
         if new_name != track.name:
@@ -65,6 +74,7 @@ def update_track(
                     detail="A track with this name already exists.",
                 )
             track.name = new_name
+            name_updated = True
 
     for field in (
         "marciapiede_complessivo_m",
@@ -75,6 +85,14 @@ def update_track(
         value = getattr(payload, field)
         if value is not None:
             setattr(track, field, value)
+
+    if payload.signal_code is not None:
+        raw_signal = payload.signal_code.strip() if payload.signal_code else ""
+        track.signal_code = raw_signal or resolve_signal_code(track.name)
+    elif name_updated:
+        track.signal_code = resolve_signal_code(track.name)
+        if not track.signal_code:
+            track.signal_code = DEFAULT_SIGNAL_CODE
 
     db.commit()
     db.refresh(track)

@@ -8,7 +8,14 @@ from sqlalchemy.orm import Session
 from ..config_service import get_category_rule, get_priority_config
 from ..data_loader import DatasetError, load_tracks_dataset
 from ..database import get_db
+from ..services.track_signals import (
+    build_signal_lookup,
+    format_signal_output,
+    normalise_signal_string,
+    signal_for_track,
+)
 from ..schemas import (
+    SuggestedTrack,
     SuggestionRequest,
     SuggestionResponse,
     SuggestionResult,
@@ -39,12 +46,28 @@ def get_suggestions(
     except DatasetError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    signal_lookup = build_signal_lookup(dataset)
+
     category_rule_cache: Dict[str, Any] = {}
     priority_cache: Dict[str, Any] = {}
     results: list[SuggestionResult] = []
 
     for train in payload.trains:
         train_category = "PRM" if train.is_prm else train.train_category
+
+        planned_track_name = None
+        append_suffix = False
+        if train.planned_signal:
+            normalised_signal, has_suffix = normalise_signal_string(train.planned_signal)
+            append_suffix = has_suffix
+            if normalised_signal:
+                planned_track_name = signal_lookup.get(normalised_signal)
+                if not planned_track_name:
+                    # Fallback to raw track name match
+                    for candidate in dataset.keys():
+                        if candidate.strip().upper() == normalised_signal:
+                            planned_track_name = candidate
+                            break
 
         if train_category not in category_rule_cache:
             category_rule_cache[train_category] = get_category_rule(db, train_category)
@@ -56,14 +79,28 @@ def get_suggestions(
                 train.train_length_m,
                 train_category,
                 dataset,
-                train.planned_track,
+                planned_track_name,
                 category_rule=category_rule_cache[train_category],
                 priority_config=priority_cache[train_category],
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-        results.append(SuggestionResult(train=train, alternatives=alternatives))
+        formatted_alternatives = []
+        for entry in alternatives:
+            signal = format_signal_output(
+                signal_for_track(dataset, entry["track"]),
+                append_suffix,
+            )
+            formatted_alternatives.append(
+                SuggestedTrack(
+                    track=signal,
+                    track_name=entry["track"],
+                    reason=entry["reason"],
+                )
+            )
+
+        results.append(SuggestionResult(train=train, alternatives=formatted_alternatives))
 
     top_level_alternatives = results[0].alternatives if len(results) == 1 else []
 
