@@ -948,10 +948,10 @@ function App() {
                 <tr>
                   <th>Binario</th>
                   <th>Segnale</th>
-                  <th className="text-right">Totale (m)</th>
-                  <th className="text-right">Alto (m)</th>
-                  <th className="text-right">Basso (m)</th>
-                  <th className="text-right">Capacita (m)</th>
+                  <th className="text-center">Totale (m)</th>
+                  <th className="text-center">Alto (m)</th>
+                  <th className="text-center">Basso (m)</th>
+                  <th className="text-center">Capacita (m)</th>
                 </tr>
               </thead>
               <tbody>
@@ -961,16 +961,16 @@ function App() {
                     <tr key={name}>
                       <td>{name}</td>
                       <td>{track.signal_code || "-"}</td>
-                      <td className="text-right">
+                      <td className="text-center">
                         {track.marciapiede_complessivo_m}
                       </td>
-                      <td className="text-right">
+                      <td className="text-center">
                         {track.marciapiede_alto_m}
                       </td>
-                      <td className="text-right">
+                      <td className="text-center">
                         {track.marciapiede_basso_m}
                       </td>
-                      <td className="text-right">
+                      <td className="text-center">
                         {track.capacita_funzionale_m ?? "-"}
                       </td>
                     </tr>
@@ -1070,10 +1070,10 @@ function App() {
               <tr>
                 <th>Nome</th>
                 <th>Segnale</th>
-                <th className="text-right">Totale</th>
-                <th className="text-right">Alto</th>
-                <th className="text-right">Basso</th>
-                <th className="text-right">Capacita</th>
+                <th className="text-center">Totale</th>
+                <th className="text-center">Alto</th>
+                <th className="text-center">Basso</th>
+                <th className="text-center">Capacita</th>
                 <th className="text-center">Azioni</th>
               </tr>
             </thead>
@@ -1107,7 +1107,7 @@ function App() {
                         track.signal_code || "-"
                       )}
                     </td>
-                    <td className="text-right">
+                    <td className="text-center">
                       {isEditing ? (
                         <input
                           type="number"
@@ -1120,7 +1120,7 @@ function App() {
                         track.marciapiede_complessivo_m
                       )}
                     </td>
-                    <td className="text-right">
+                    <td className="text-center">
                       {isEditing ? (
                         <input
                           type="number"
@@ -1133,7 +1133,7 @@ function App() {
                         track.marciapiede_alto_m
                       )}
                     </td>
-                    <td className="text-right">
+                    <td className="text-center">
                       {isEditing ? (
                         <input
                           type="number"
@@ -1146,7 +1146,7 @@ function App() {
                         track.marciapiede_basso_m
                       )}
                     </td>
-                    <td className="text-right">
+                    <td className="text-center">
                       {isEditing ? (
                         <input
                           type="number"
