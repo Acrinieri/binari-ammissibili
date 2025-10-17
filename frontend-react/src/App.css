@@ -387,6 +387,7 @@
 .data-table th,
 .data-table td {
   padding: 8px;
+  text-align: center;
 }
 
 .data-table tbody tr {
